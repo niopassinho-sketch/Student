@@ -68,10 +68,10 @@ export default function Auth() {
 
       <div className="w-full max-w-sm space-y-6 relative z-10">
         <div className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-xl bg-primary flex items-center justify-center mx-auto">
-            <BookOpen className="w-7 h-7 text-primary-foreground" />
+          <div className="w-14 h-14 rounded-xl flex items-center justify-center mx-auto">
+            <img src="/logo_3d.png" alt="Student Logo" className="w-14 h-14 object-contain" />
           </div>
-          <h1 className="font-display text-2xl font-bold text-white">StudyFlow</h1>
+          <h1 className="font-display text-2xl font-bold text-white">Student</h1>
           <p className="text-sm text-gray-300">Gestão de Revisões Espaçadas</p>
         </div>
 
