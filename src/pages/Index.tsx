@@ -11,13 +11,14 @@ import { ptBR } from 'date-fns/locale';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 type Tab = 'today' | 'agenda' | 'history' | 'stats';
 
 const Index = () => {
   const { studies, todayReviews, loading } = useStudy();
   const { signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<Tab>('today');
+  const [activeTab, setActiveTab] = useState<Tab>('stats');
 
   if (loading) {
     return (
@@ -49,11 +50,9 @@ const Index = () => {
       <header className="border-b border-border bg-card/60 backdrop-blur-md sticky top-0 z-50">
         <div className="container max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <img src="/logo_3d.png" alt="Student Logo" className="w-10 h-10 object-contain" />
             <div>
-              <h1 className="font-display text-xl font-bold">StudyFlow</h1>
+              <h1 className="font-display text-xl font-bold">Student</h1>
               <p className="text-xs text-muted-foreground">Gestão de Revisões Espaçadas</p>
             </div>
           </div>
@@ -97,6 +96,10 @@ const Index = () => {
       <main className="container max-w-4xl mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as Tab)}>
           <TabsList className="w-full justify-start gap-1 bg-muted/50 mb-6">
+            <TabsTrigger value="stats" className="gap-1.5 data-[state=active]:bg-card">
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Dashboard</span>
+            </TabsTrigger>
             <TabsTrigger value="today" className="gap-1.5 data-[state=active]:bg-card">
               <Bell className="w-4 h-4" />
               <span className="hidden sm:inline">Hoje</span>
@@ -113,10 +116,6 @@ const Index = () => {
             <TabsTrigger value="history" className="gap-1.5 data-[state=active]:bg-card">
               <History className="w-4 h-4" />
               <span className="hidden sm:inline">Histórico</span>
-            </TabsTrigger>
-            <TabsTrigger value="stats" className="gap-1.5 data-[state=active]:bg-card">
-              <BarChart3 className="w-4 h-4" />
-              <span className="hidden sm:inline">Estatísticas</span>
             </TabsTrigger>
           </TabsList>
 
@@ -184,8 +183,8 @@ const Index = () => {
           </TabsContent>
 
           {/* STATS */}
-          <TabsContent value="stats" className="space-y-4">
-            <h2 className="font-display text-2xl font-bold">Estatísticas</h2>
+          <TabsContent value="stats" className="space-y-6 bg-muted/30 p-6 rounded-2xl border border-border/50">
+            <h2 className="font-display text-2xl font-bold">Dashboard</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
                 { label: 'Aulas', value: totalStudies, color: 'text-primary' },
@@ -197,29 +196,54 @@ const Index = () => {
                   key={stat.label}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="glass-card rounded-xl p-4 text-center"
+                  className="glass-card rounded-xl p-4 text-center bg-card/50"
                 >
                   <p className={cn("font-display text-3xl font-bold", stat.color)}>{stat.value}</p>
                   <p className="text-xs text-muted-foreground mt-1">{stat.label}</p>
                 </motion.div>
               ))}
             </div>
-            {totalReviews > 0 && (
-              <div className="glass-card rounded-xl p-4">
-                <h3 className="font-display font-semibold mb-3">Progresso Geral</h3>
-                <div className="w-full bg-muted rounded-full h-3 overflow-hidden">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${(completedReviews / totalReviews) * 100}%` }}
-                    transition={{ duration: 1, ease: 'easeOut' }}
-                    className="h-full bg-primary rounded-full"
-                  />
+            
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="glass-card rounded-xl p-4 bg-card/50">
+                <h3 className="font-display font-semibold mb-4">Revisões por Matéria</h3>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={studies.map(s => ({ name: s.subject, reviews: s.reviews.length }))}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Bar dataKey="reviews" fill="#8884d8" radius={[4, 4, 0, 0]}>
+                        {studies.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={['#8884d8', '#82ca9d', '#ffc658'][index % 3]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                  {completedReviews} de {totalReviews} revisões concluídas ({Math.round((completedReviews / totalReviews) * 100)}%)
-                </p>
               </div>
-            )}
+
+              {totalReviews > 0 && (
+                <div className="glass-card rounded-xl p-4 bg-card/50">
+                  <h3 className="font-display font-semibold mb-4">Progresso Geral</h3>
+                  <div className="flex items-center justify-center h-48">
+                    <div className="text-center">
+                      <p className="text-5xl font-bold text-primary">{Math.round((completedReviews / totalReviews) * 100)}%</p>
+                      <p className="text-sm text-muted-foreground mt-2">de revisões concluídas</p>
+                    </div>
+                  </div>
+                  <div className="w-full bg-muted rounded-full h-3 overflow-hidden mt-4">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(completedReviews / totalReviews) * 100}%` }}
+                      transition={{ duration: 1, ease: 'easeOut' }}
+                      className="h-full bg-primary rounded-full"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </main>
