@@ -57,17 +57,25 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-sm space-y-6">
+    <div className="min-h-screen bg-gray-800 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Decorative Background Elements */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl" />
+        <BookOpen className="absolute top-10 right-10 w-32 h-32 text-white/5" />
+        <BookOpen className="absolute bottom-20 left-20 w-48 h-48 text-white/5" />
+      </div>
+
+      <div className="w-full max-w-sm space-y-6 relative z-10">
         <div className="text-center space-y-2">
           <div className="w-14 h-14 rounded-xl bg-primary flex items-center justify-center mx-auto">
             <BookOpen className="w-7 h-7 text-primary-foreground" />
           </div>
-          <h1 className="font-display text-2xl font-bold">StudyFlow</h1>
-          <p className="text-sm text-muted-foreground">Gestão de Revisões Espaçadas</p>
+          <h1 className="font-display text-2xl font-bold text-white">StudyFlow</h1>
+          <p className="text-sm text-gray-300">Gestão de Revisões Espaçadas</p>
         </div>
 
-        <div className="glass-card rounded-xl p-6 space-y-4">
+        <div className="glass-card rounded-xl p-6 space-y-4 bg-white/95">
           <h2 className="font-display text-lg font-semibold text-center">
             {isLogin ? 'Entrar' : 'Criar Conta'}
           </h2>
