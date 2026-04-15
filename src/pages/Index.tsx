@@ -25,18 +25,33 @@ const Index = () => {
 
   useEffect(() => {
     const loadSettings = async () => {
-      const { data } = await supabase.from('app_settings').select('*').single();
-      if (data) {
-        setSettings(data);
-        if (data.favicon_url) {
-          const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement || document.createElement('link');
-          link.rel = 'icon';
-          link.href = data.favicon_url;
-          document.head.appendChild(link);
+      try {
+        const { data, error } = await supabase
+          .from('app_settings')
+          .select('*')
+          .order('updated_at', { ascending: false })
+          .limit(1);
+        
+        if (data && data.length > 0) {
+          setSettings(data[0]);
         }
+      } catch (err) {
+        console.error('Unexpected error loading settings:', err);
       }
     };
     loadSettings();
+
+    // Real-time subscription
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings' }, (payload) => {
+        setSettings(payload.new as any);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   if (loading) {
@@ -69,7 +84,11 @@ const Index = () => {
       <header className="border-b border-border bg-card/60 backdrop-blur-md sticky top-0 z-50">
         <div className="container max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={settings?.logo_url || "/logo_3d.png"} alt="Student Logo" className="w-10 h-10 object-contain" />
+             <img 
+               src={settings?.logo_url || "/logo_3d.png"} 
+               alt="Student Logo" 
+               className="w-10 h-10 object-contain"
+             />
             <div>
               <h1 className="font-display text-xl font-bold">Student</h1>
               <p className="text-xs text-muted-foreground">Gestão de Revisões Espaçadas</p>

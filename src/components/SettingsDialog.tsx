@@ -28,10 +28,12 @@ export function SettingsDialog() {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      const { data } = supabase.storage
         .from('assets')
         .getPublicUrl(fileName);
 
+      const publicUrl = data.publicUrl;
+      
       if (type === 'logo') setLogoUrl(publicUrl);
       else setFaviconUrl(publicUrl);
 
@@ -61,7 +63,7 @@ export function SettingsDialog() {
 
       toast.success('Configurações salvas com sucesso!');
       setOpen(false);
-      window.location.reload(); // Reload to apply changes
+      // window.location.reload(); // Removed to prevent potential white screen issues
     } catch (error) {
       toast.error('Erro ao salvar configurações');
       console.error(error);
@@ -77,10 +79,13 @@ export function SettingsDialog() {
           <Settings className="w-5 h-5" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="glass-card">
+      <DialogContent className="glass-card" aria-describedby="settings-description">
         <DialogHeader>
           <DialogTitle className="font-display text-xl">Configurações</DialogTitle>
         </DialogHeader>
+        <div id="settings-description" className="sr-only">
+          <p>Configure o tema do sistema e personalize a logo e o favicon.</p>
+        </div>
         <div className="space-y-6 mt-4">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">Tema</span>
