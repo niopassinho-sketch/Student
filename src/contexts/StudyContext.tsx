@@ -3,7 +3,7 @@ import { Study, ReviewType } from '@/lib/types';
 import {
   loadStudiesFromDB, createStudyInDB,
   completeReviewInDB, rescheduleReviewInDB,
-  completeStudyInDB, deleteStudyInDB, updateStudyInDB,
+  completeStudyInDB, deleteStudyInDB, updateStudyInDB, markStudyAsWatchedInDB,
   getTodayReviews, hasReviewOnDate,
 } from '@/lib/studyStore';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,9 +13,9 @@ interface StudyContextType {
   studies: Study[];
   todayReviews: ReturnType<typeof getTodayReviews>;
   loading: boolean;
-  addStudy: (discipline: string, subject: string, completionDate: string, description?: string, url?: string) => Promise<void>;
-  updateStudy: (studyId: string, discipline: string, subject: string, completionDate: string, description?: string, url?: string) => Promise<void>;
-  markStudyComplete: (studyId: string) => Promise<void>;
+  addStudy: (discipline: string, subject: string, studyDate: string, description?: string, url?: string) => Promise<void>;
+  updateStudy: (studyId: string, discipline: string, subject: string, studyDate: string, description?: string, url?: string) => Promise<void>;
+  markStudyAsWatched: (studyId: string, completionDate: string) => Promise<void>;
   markReviewComplete: (studyId: string, reviewId: string, type: ReviewType) => Promise<void>;
   updateReviewNotes: (studyId: string, reviewId: string, notes: string) => Promise<void>;
   rescheduleReview: (studyId: string, reviewId: string, newDate: string) => Promise<void>;
@@ -41,36 +41,40 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
 
   const todayReviews = getTodayReviews(studies);
 
-  const addStudy = useCallback(async (discipline: string, subject: string, completionDate: string, description?: string, url?: string) => {
+  const addStudy = useCallback(async (discipline: string, subject: string, studyDate: string, description?: string, url?: string) => {
     if (!user) return;
-    const study = await createStudyInDB(user.id, discipline, subject, completionDate, description, url);
+    const study = await createStudyInDB(user.id, discipline, subject, studyDate, description, url);
     if (study) {
       setStudies(prev => [study, ...prev]);
-      toast.success('Aula cadastrada!');
+      toast.success('Aula agendada!');
     } else {
-      toast.error('Erro ao cadastrar aula');
+      toast.error('Erro ao agendar aula');
     }
   }, [user]);
 
-  const updateStudyFn = useCallback(async (studyId: string, discipline: string, subject: string, completionDate: string, description?: string, url?: string) => {
-    const ok = await updateStudyInDB(studyId, discipline, subject, completionDate, description, url);
+  const updateStudyFn = useCallback(async (studyId: string, discipline: string, subject: string, studyDate: string, description?: string, url?: string) => {
+    const ok = await updateStudyInDB(studyId, discipline, subject, studyDate, description, url);
     if (ok) {
-      setStudies(prev => prev.map(s => s.id === studyId ? { ...s, discipline, subject, completionDate, description, url } : s));
+      setStudies(prev => prev.map(s => s.id === studyId ? { ...s, discipline, subject, studyDate, description, url } : s));
       toast.success('Estudo atualizado!');
     } else {
       toast.error('Erro ao atualizar estudo');
     }
   }, []);
 
-  const markStudyComplete = useCallback(async (studyId: string) => {
-    const ok = await completeStudyInDB(studyId);
-    if (ok) {
+  const markStudyAsWatched = useCallback(async (studyId: string, completionDate: string) => {
+    if (!user) return;
+    const reviews = await markStudyAsWatchedInDB(user.id, studyId, completionDate);
+    if (reviews) {
       setStudies(prev => prev.map(s => s.id === studyId
-        ? { ...s, completed: true, completedDate: new Date().toISOString().split('T')[0] }
+        ? { ...s, completed: true, completionDate, reviews }
         : s
       ));
+      toast.success('Aula marcada como assistida!');
+    } else {
+      toast.error('Erro ao marcar aula como assistida');
     }
-  }, []);
+  }, [user]);
 
   const markReviewComplete = useCallback(async (_studyId: string, reviewId: string, type: ReviewType) => {
     const ok = await completeReviewInDB(reviewId, type);
@@ -139,7 +143,7 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <StudyContext.Provider value={{
-      studies, todayReviews, loading, addStudy, updateStudy: updateStudyFn, markStudyComplete,
+      studies, todayReviews, loading, addStudy, updateStudy: updateStudyFn, markStudyAsWatched,
       markReviewComplete, updateReviewNotes, rescheduleReview: reschedule, checkDateConflict, deleteStudy: deleteStudyFn,
     }}>
       {children}

@@ -54,22 +54,41 @@ export async function loadStudiesFromDB(userId: string): Promise<Study[]> {
   }));
 }
 
-export async function createStudyInDB(userId: string, discipline: string, subject: string, completionDate: string, description?: string, url?: string): Promise<Study | null> {
-  const today = format(new Date(), 'yyyy-MM-dd');
-
+export async function createStudyInDB(userId: string, discipline: string, subject: string, studyDate: string, description?: string, url?: string): Promise<Study | null> {
   const { data: study, error: sErr } = await supabase
     .from('studies')
-    .insert({ user_id: userId, discipline, subject, description, url, study_date: today, completion_date: completionDate })
+    .insert({ user_id: userId, discipline, subject, description, url, study_date: studyDate })
     .select()
     .single();
 
   if (sErr || !study) return null;
 
-  // Use completionDate as the base date for generating reviews
+  return {
+    id: study.id,
+    discipline: study.discipline ?? undefined,
+    subject: study.subject,
+    description: study.description ?? undefined,
+    url: study.url ?? undefined,
+    studyDate: study.study_date,
+    completionDate: study.completion_date ?? undefined,
+    completed: study.completed,
+    reviews: [],
+    createdAt: study.created_at,
+  };
+}
+
+export async function markStudyAsWatchedInDB(userId: string, studyId: string, completionDate: string): Promise<Review[] | null> {
+  const { error: sErr } = await supabase
+    .from('studies')
+    .update({ completion_date: completionDate, completed: true })
+    .eq('id', studyId);
+
+  if (sErr) return null;
+
   const baseDate = new Date(completionDate + 'T12:00:00');
 
   const reviewInserts = REVIEW_SCHEDULE.map(schedule => ({
-    study_id: study.id,
+    study_id: studyId,
     user_id: userId,
     review_number: schedule.number,
     scheduled_date: format(addDays(baseDate, schedule.daysAfter), 'yyyy-MM-dd'),
@@ -83,26 +102,15 @@ export async function createStudyInDB(userId: string, discipline: string, subjec
 
   if (rErr || !reviews) return null;
 
-  return {
-    id: study.id,
-    discipline: study.discipline ?? undefined,
-    subject: study.subject,
-    description: study.description ?? undefined,
-    url: study.url ?? undefined,
-    studyDate: study.study_date,
-    completionDate: study.completion_date ?? undefined,
-    completed: study.completed,
-    reviews: reviews.map(r => ({
-      id: r.id,
-      studyId: r.study_id,
-      reviewNumber: r.review_number as 1 | 2 | 3 | 4,
-      scheduledDate: r.scheduled_date,
-      originalDate: r.original_date,
-      completed: r.completed,
-      type: undefined,
-    })).sort((a, b) => a.reviewNumber - b.reviewNumber),
-    createdAt: study.created_at,
-  };
+  return reviews.map(r => ({
+    id: r.id,
+    studyId: r.study_id,
+    reviewNumber: r.review_number as 1 | 2 | 3 | 4,
+    scheduledDate: r.scheduled_date,
+    originalDate: r.original_date,
+    completed: r.completed,
+    type: undefined,
+  })).sort((a, b) => a.reviewNumber - b.reviewNumber);
 }
 
 export async function completeReviewInDB(reviewId: string, type: ReviewType): Promise<boolean> {

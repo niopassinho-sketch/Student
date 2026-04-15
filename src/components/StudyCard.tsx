@@ -16,11 +16,18 @@ const reviewDotColors = [
 ];
 
 export function StudyCard({ study }: { study: Study }) {
-  const { markStudyComplete, deleteStudy, updateReviewNotes } = useStudy();
+  const { markStudyAsWatched, deleteStudy, updateReviewNotes } = useStudy();
   const [expanded, setExpanded] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [showCompletionDialog, setShowCompletionDialog] = useState(false);
+  const [completionDate, setCompletionDate] = useState(new Date().toISOString().split('T')[0]);
 
   const completedReviews = study.reviews.filter(r => r.completed).length;
+
+  const handleComplete = () => {
+    markStudyAsWatched(study.id, completionDate);
+    setShowCompletionDialog(false);
+  };
 
   return (
     <>
@@ -70,12 +77,13 @@ export function StudyCard({ study }: { study: Study }) {
               {!study.completed && (
                 <Button
                   variant="ghost"
-                  size="icon"
-                  onClick={() => markStudyComplete(study.id)}
-                  className="text-success hover:text-success"
-                  title="Marcar estudo como concluído"
+                  size="sm"
+                  onClick={() => setShowCompletionDialog(true)}
+                  className="text-success hover:text-success gap-1"
+                  title="Marcar aula como assistida"
                 >
                   <CheckCircle2 className="w-4 h-4" />
+                  Assistida
                 </Button>
               )}
               <Button
@@ -160,6 +168,22 @@ export function StudyCard({ study }: { study: Study }) {
         )}
       </motion.div>
       <EditStudyDialog study={study} open={editOpen} onOpenChange={setEditOpen} />
+      {showCompletionDialog && (
+        <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
+          <div className="glass-card rounded-xl p-6 w-full max-w-xs space-y-4 bg-white">
+            <h3 className="font-display font-semibold">Data de Conclusão</h3>
+            <Input
+              type="date"
+              value={completionDate}
+              onChange={e => setCompletionDate(e.target.value)}
+            />
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowCompletionDialog(false)} className="flex-1">Cancelar</Button>
+              <Button onClick={handleComplete} className="flex-1">Confirmar</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

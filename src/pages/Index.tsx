@@ -168,14 +168,14 @@ const Index = () => {
           {/* HISTORY */}
           <TabsContent value="history" className="space-y-4">
             <h2 className="font-display text-2xl font-bold">Histórico de Estudos</h2>
-            {studies.length === 0 ? (
+            {studies.filter(s => s.completed).length === 0 ? (
               <div className="glass-card rounded-xl p-12 text-center">
                 <History className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground">Nenhum estudo registrado ainda.</p>
+                <p className="text-sm text-muted-foreground">Nenhum estudo concluído ainda.</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {[...studies].reverse().map(study => (
+                {[...studies].filter(s => s.completed).reverse().map(study => (
                   <StudyCard key={study.id} study={study} />
                 ))}
               </div>
@@ -204,6 +204,19 @@ const Index = () => {
               ))}
             </div>
             
+            <div className="space-y-4">
+              <h3 className="font-display font-semibold">Aulas Agendadas</h3>
+              {studies.filter(s => !s.completed).length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhuma aula agendada.</p>
+              ) : (
+                <div className="space-y-3">
+                  {studies.filter(s => !s.completed).map(study => (
+                    <StudyCard key={study.id} study={study} />
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="grid md:grid-cols-2 gap-4">
               <div className="glass-card rounded-xl p-4 bg-card/50">
                 <h3 className="font-display font-semibold mb-4">Revisões por Matéria</h3>

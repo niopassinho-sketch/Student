@@ -11,17 +11,17 @@ export function AddStudyDialog() {
   const [open, setOpen] = useState(false);
   const [discipline, setDiscipline] = useState('');
   const [subject, setSubject] = useState('');
-  const [completionDate, setCompletionDate] = useState(new Date().toISOString().split('T')[0]);
+  const [studyDate, setStudyDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
   const [url, setUrl] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!discipline.trim() || !subject.trim() || !completionDate) return;
-    addStudy(discipline.trim(), subject.trim(), completionDate, description.trim() || undefined, url.trim() || undefined);
+    if (!discipline.trim() || !subject.trim() || !studyDate) return;
+    addStudy(discipline.trim(), subject.trim(), studyDate, description.trim() || undefined, url.trim() || undefined);
     setDiscipline('');
     setSubject('');
-    setCompletionDate(new Date().toISOString().split('T')[0]);
+    setStudyDate(new Date().toISOString().split('T')[0]);
     setDescription('');
     setUrl('');
     setOpen(false);
@@ -63,12 +63,21 @@ export function AddStudyDialog() {
             />
           </div>
           <div>
-            <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Data de Conclusão *</label>
+            <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Data de Início *</label>
             <Input
               type="date"
-              value={completionDate}
-              onChange={e => setCompletionDate(e.target.value)}
+              value={studyDate}
+              onChange={e => setStudyDate(e.target.value)}
               required
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Data de Conclusão (Inativa)</label>
+            <Input
+              type="date"
+              value=""
+              disabled
+              placeholder="Preencha após assistir a aula"
             />
           </div>
           <div>
@@ -93,7 +102,7 @@ export function AddStudyDialog() {
               rows={3}
             />
           </div>
-          <Button type="submit" className="w-full font-semibold" disabled={!discipline.trim() || !subject.trim() || !completionDate}>
+          <Button type="submit" className="w-full font-semibold" disabled={!discipline.trim() || !subject.trim() || !studyDate}>
             Cadastrar Aula
           </Button>
         </form>
