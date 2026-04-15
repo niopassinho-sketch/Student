@@ -19,16 +19,19 @@ type Tab = 'today' | 'agenda' | 'history' | 'stats';
 
 const Index = () => {
   const { studies, todayReviews, loading } = useStudy();
-  const { signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('stats');
   const [settings, setSettings] = useState<{ logo_url: string | null; favicon_url: string | null; theme: string } | null>(null);
 
   useEffect(() => {
+    if (!user) return;
+
     const loadSettings = async () => {
       try {
         const { data, error } = await supabase
           .from('app_settings')
           .select('*')
+          .eq('user_id', user.id)
           .order('updated_at', { ascending: false })
           .limit(1);
         
@@ -44,15 +47,20 @@ const Index = () => {
     // Real-time subscription
     const channel = supabase
       .channel('schema-db-changes')
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_settings' }, (payload) => {
-        setSettings(payload.new as any);
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'app_settings',
+        filter: `user_id=eq.${user.id}`
+      }, (payload) => {
+        if (payload.new) setSettings(payload.new as any);
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [user]);
 
   if (loading) {
     return (
