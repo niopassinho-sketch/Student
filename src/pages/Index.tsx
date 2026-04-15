@@ -24,6 +24,7 @@ const Index = () => {
   const [settings, setSettings] = useState<{ logo_url: string | null; favicon_url: string | null; theme: string } | null>(null);
 
   useEffect(() => {
+    console.log("Settings state:", settings);
     if (!user) return;
 
     const loadSettings = async () => {
