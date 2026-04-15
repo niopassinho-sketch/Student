@@ -4,12 +4,14 @@ import { useStudy } from '@/contexts/StudyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { ReviewCard } from '@/components/ReviewCard';
 import { AddStudyDialog } from '@/components/AddStudyDialog';
+import { SettingsDialog } from '@/components/SettingsDialog';
 import { StudyCard } from '@/components/StudyCard';
 import { Button } from '@/components/ui/button';
 import { format, parseISO, isToday, isFuture, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
@@ -19,6 +21,23 @@ const Index = () => {
   const { studies, todayReviews, loading } = useStudy();
   const { signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('stats');
+  const [settings, setSettings] = useState<{ logo_url: string | null; favicon_url: string | null; theme: string } | null>(null);
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      const { data } = await supabase.from('app_settings').select('*').single();
+      if (data) {
+        setSettings(data);
+        if (data.favicon_url) {
+          const link = document.querySelector("link[rel~='icon']") as HTMLLinkElement || document.createElement('link');
+          link.rel = 'icon';
+          link.href = data.favicon_url;
+          document.head.appendChild(link);
+        }
+      }
+    };
+    loadSettings();
+  }, []);
 
   if (loading) {
     return (
@@ -50,7 +69,7 @@ const Index = () => {
       <header className="border-b border-border bg-card/60 backdrop-blur-md sticky top-0 z-50">
         <div className="container max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src="/logo_3d.png" alt="Student Logo" className="w-10 h-10 object-contain" />
+            <img src={settings?.logo_url || "/logo_3d.png"} alt="Student Logo" className="w-10 h-10 object-contain" />
             <div>
               <h1 className="font-display text-xl font-bold">Student</h1>
               <p className="text-xs text-muted-foreground">Gestão de Revisões Espaçadas</p>
@@ -69,6 +88,7 @@ const Index = () => {
                 </span>
               </motion.div>
             )}
+            <SettingsDialog />
             <AddStudyDialog />
             <Button variant="ghost" size="icon" onClick={signOut} title="Sair">
               <LogOut className="w-5 h-5" />
