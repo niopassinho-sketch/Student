@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Autenticando...</title>
+</head>
+<body>
+  <script>
+    if (window.opener) {
+      window.opener.postMessage({ 
+        type: 'OAUTH_AUTH_CALLBACK', 
+        url: window.location.href,
+        hash: window.location.hash,
+        search: window.location.search
+      }, '*');
+      window.close();
+    } else {
+      window.location.href = '/';
+    }
+  </script>
+  <p>Autenticação concluída. Esta janela fechará automaticamente.</p>
+</body>
+</html>

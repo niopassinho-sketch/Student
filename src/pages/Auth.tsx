@@ -41,8 +41,8 @@ export default function Auth() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin,
-          skipBrowserRedirect: true,
+          redirectTo: `${window.location.origin}/oauth-callback.html`,
+          skipBrowserRedirect: true, // We must skip auto-redirect and open popup manually
         }
       });
       if (error) throw error;
