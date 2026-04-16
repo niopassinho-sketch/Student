@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CheckCircle2, BookOpen, Trash2, ChevronDown, Pencil } from 'lucide-react';
+import { CheckCircle2, BookOpen, Trash2, ChevronDown, Pencil, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -44,6 +44,11 @@ export function StudyCard({ study }: { study: Study }) {
                 <h3 className="font-display font-semibold truncate">
                   {study.discipline ? `${study.discipline} - ${study.subject}` : study.subject}
                 </h3>
+                {study.url && (
+                  <a href={study.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80">
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                )}
               </div>
               {study.description && (
                 <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{study.description}</p>
