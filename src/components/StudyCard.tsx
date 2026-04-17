@@ -1,13 +1,15 @@
 import { motion } from 'framer-motion';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { CheckCircle2, BookOpen, Trash2, ChevronDown, Pencil, ExternalLink } from 'lucide-react';
+import { CheckCircle2, BookOpen, Trash2, ChevronDown, Pencil, ExternalLink, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { useStudy } from '@/contexts/StudyContext';
-import { Study, REVIEW_TYPE_LABELS } from '@/lib/types';
-import { useState } from 'react';
+import { Study, Review, REVIEW_TYPE_LABELS } from '@/lib/types';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { EditStudyDialog } from './EditStudyDialog';
 
@@ -21,6 +23,8 @@ export function StudyCard({ study }: { study: Study }) {
   const [editOpen, setEditOpen] = useState(false);
   const [showCompletionDialog, setShowCompletionDialog] = useState(false);
   const [completionDate, setCompletionDate] = useState(new Date().toISOString().split('T')[0]);
+  const [selectedNotesReview, setSelectedNotesReview] = useState<Review | null>(null);
+  const [notesDraft, setNotesDraft] = useState('');
 
   const completedReviews = study.reviews.filter(r => r.completed).length;
 
@@ -28,6 +32,19 @@ export function StudyCard({ study }: { study: Study }) {
     markStudyAsWatched(study.id, completionDate);
     setShowCompletionDialog(false);
   };
+
+  const handleSaveNotes = () => {
+    if (selectedNotesReview) {
+      updateReviewNotes(study.id, selectedNotesReview.id, notesDraft);
+      setSelectedNotesReview(null);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedNotesReview) {
+      setNotesDraft(selectedNotesReview.notes || '');
+    }
+  }, [selectedNotesReview]);
 
   return (
     <>
@@ -133,19 +150,19 @@ export function StudyCard({ study }: { study: Study }) {
                 <div
                   key={r.id}
                   className={cn(
-                    "flex items-center justify-between text-sm p-2 rounded-lg",
+                    "flex flex-col text-sm p-3 rounded-lg gap-2",
                     r.completed ? "bg-success/5" : "bg-muted/50"
                   )}
                 >
-                  <div className="flex items-center gap-2">
-                    <div className={cn("w-2 h-2 rounded-full", r.completed ? reviewDotColors[i] : "bg-muted-foreground/30")} />
-                    <span className="font-medium">{r.reviewNumber}ª Revisão</span>
-                    <span className="text-muted-foreground">
-                      {format(parseISO(r.scheduledDate), "dd/MM/yyyy")}
-                    </span>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2 justify-end">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className={cn("w-2 h-2 rounded-full", r.completed ? reviewDotColors[i] : "bg-muted-foreground/30")} />
+                      <span className="font-medium">{r.reviewNumber}ª Revisão</span>
+                      <span className="text-muted-foreground">
+                        {format(parseISO(r.scheduledDate), "dd/MM/yyyy")}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
                       {r.completed && r.type && (
                         <Badge variant="outline" className="text-xs">
                           {REVIEW_TYPE_LABELS[r.type]}
@@ -157,15 +174,21 @@ export function StudyCard({ study }: { study: Study }) {
                         <span className="text-xs text-muted-foreground">Pendente</span>
                       )}
                     </div>
-                    {r.completed && (
-                      <Input
-                        placeholder="Minhas impressões..."
-                        defaultValue={r.notes}
-                        onBlur={(e) => updateReviewNotes(study.id, r.id, e.target.value)}
-                        className="text-xs h-8"
-                      />
-                    )}
                   </div>
+                  
+                  {r.completed && (
+                    <div className="flex justify-end mt-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 text-xs text-muted-foreground hover:text-primary gap-1"
+                        onClick={() => setSelectedNotesReview(r)}
+                      >
+                        <FileText className="w-3 h-3" />
+                        {r.notes ? 'Ver Impressões' : 'Adicionar Impressão'}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -173,6 +196,8 @@ export function StudyCard({ study }: { study: Study }) {
         )}
       </motion.div>
       <EditStudyDialog study={study} open={editOpen} onOpenChange={setEditOpen} />
+      
+      {/* Existent Dialogs */}
       {showCompletionDialog && (
         <div className="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4">
           <div className="glass-card rounded-xl p-6 w-full max-w-xs space-y-4 bg-white">
@@ -189,6 +214,30 @@ export function StudyCard({ study }: { study: Study }) {
           </div>
         </div>
       )}
+      <Dialog open={!!selectedNotesReview} onOpenChange={(open) => !open && setSelectedNotesReview(null)}>
+        <DialogContent className="glass-card max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display">Minhas Impressões</DialogTitle>
+            <DialogDescription>
+              {selectedNotesReview && `Anotações da ${selectedNotesReview.reviewNumber}ª revisão`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <Textarea
+              placeholder="Escreva suas anotações, dificuldades ou pontos importantes..."
+              value={notesDraft}
+              onChange={(e) => setNotesDraft(e.target.value)}
+              className="min-h-[150px] resize-y"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setSelectedNotesReview(null)}>Cancelar</Button>
+              <Button onClick={handleSaveNotes} className="bg-primary text-primary-foreground">
+                Salvar Impressões
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

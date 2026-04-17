@@ -36,6 +36,7 @@ export function ReviewCard({ review, showSubject = true, showNotes = false }: Re
   const { markReviewComplete, rescheduleReview, checkDateConflict, updateReviewNotes } = useStudy();
   const [completeOpen, setCompleteOpen] = useState(false);
   const [rescheduleOpen, setRescheduleOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<ReviewType>('video');
   const [notes, setNotes] = useState(review.notes || '');
   const [selectedDate, setSelectedDate] = useState<Date>();
@@ -130,12 +131,35 @@ export function ReviewCard({ review, showSubject = true, showNotes = false }: Re
             <CheckCircle2 className="w-4 h-4 mr-1" /> Concluir
           </Button>
           {review.completed && review.notes && (
-            <Button variant="ghost" size="sm" onClick={() => alert(review.notes)}>
-              Ver Impressões
+            <Button variant="ghost" size="sm" onClick={() => setNotesOpen(true)}>
+              <FileText className="w-4 h-4 mr-1" /> Ver Impressões
             </Button>
           )}
         </div>
       </motion.div>
+
+      {/* Notes Dialog */}
+      <Dialog open={notesOpen} onOpenChange={setNotesOpen}>
+        <DialogContent className="glass-card max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="font-display">Minhas Impressões</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <Textarea
+              placeholder="Minhas impressões..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="min-h-[150px] resize-y"
+            />
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setNotesOpen(false)}>Fechar</Button>
+              <Button onClick={() => { updateReviewNotes(review.studyId, review.id, notes); setNotesOpen(false); }} className="bg-primary text-primary-foreground">
+                Salvar Impressões
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Complete Dialog */}
       <Dialog open={completeOpen} onOpenChange={setCompleteOpen}>
