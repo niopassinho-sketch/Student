@@ -15,19 +15,44 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
     try {
+      // --- INICIO DA ALTERAÇÃO ---
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        if (error) {
+          if (error.message.includes('Email not confirmed')) {
+            throw new Error('Por favor, verifique sua caixa de entrada e confirme seu e-mail antes de entrar.');
+          } else if (error.message.includes('Invalid login credentials')) {
+            throw new Error('E-mail ou senha incorretos.');
+          }
+          throw error;
+        }
         toast.success('Login realizado com sucesso!');
       } else {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email,
           password,
           options: { emailRedirectTo: window.location.origin },
         });
-        if (error) throw error;
-        toast.success('Conta criada! Verifique seu e-mail para confirmar.');
+        
+        if (error) {
+          if (error.message.includes('User already registered')) {
+            throw new Error('Este e-mail já está cadastrado. Tente fazer login.');
+          }
+          throw error;
+        }
+
+        // Se o Supabase retornar uma sessão imediatamente, o "Confirm Email" está desligado
+        // e o usuário já está logado.
+        if (data.session) {
+          toast.success('Conta criada e login realizado com sucesso!');
+        } else {
+          // Se não retornar sessão, significa que enviou e-mail de confirmação OU 
+          // ocorreu um bloqueio silencioso do Supabase (Email Enumeration Protection)
+          toast.success('Conta recebida pelo sistema! Se o cadastro for válido, verifique seu e-mail para confirmar.');
+          setIsLogin(true); // Muda para a tela de login
+        }
       }
+      // --- FIM DA ALTERAÇÃO ---
     } catch (error: unknown) {
       toast.error(error instanceof Error ? error.message : 'Erro na autenticação');
     } finally {

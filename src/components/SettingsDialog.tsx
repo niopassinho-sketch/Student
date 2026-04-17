@@ -72,6 +72,11 @@ export function SettingsDialog() {
     }
   };
 
+  const SUPERUSER_EMAIL = 'niopassinho@gmail.com';
+  const isSuperUser = user?.email === SUPERUSER_EMAIL;
+
+  if (!isSuperUser) return null;
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>

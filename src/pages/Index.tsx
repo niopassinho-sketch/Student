@@ -32,7 +32,8 @@ const Index = () => {
         const { data, error } = await supabase
           .from('app_settings')
           .select('*')
-          .eq('user_id', user.id)
+          // Removemos o filtro '.eq('user_id', user.id)' para buscar a configuração global
+          // (a mais recente salva no banco independentemente do usuário)
           .order('updated_at', { ascending: false })
           .limit(1);
         
@@ -45,14 +46,13 @@ const Index = () => {
     };
     loadSettings();
 
-    // Real-time subscription
+    // Real-time subscription - ouvindo todas as alterações na tabela
     const channel = supabase
       .channel('schema-db-changes')
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
-        table: 'app_settings',
-        filter: `user_id=eq.${user.id}`
+        table: 'app_settings'
       }, (payload) => {
         if (payload.new) setSettings(payload.new as any);
       })
@@ -105,6 +105,17 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              {/* --- INICIO DA ALTERAÇÃO --- */}
+              <div className="hidden md:flex flex-col items-end mr-4">
+                <span className="text-sm font-semibold text-foreground">
+                  {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Aluno'}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {user?.email}
+                </span>
+              </div>
+              {/* --- FIM DA ALTERAÇÃO --- */}
+
               {todayReviews.length > 0 && (
                 <motion.div
                   initial={{ scale: 0 }}
