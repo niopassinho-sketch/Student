@@ -73,11 +73,16 @@ export function ReviewCard({ review, showSubject = true, showNotes = false }: Re
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         className={cn(
-          "glass-card rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3",
-          isOverdue && "border-destructive/50"
+          "rounded-xl p-4 flex flex-col sm:flex-row sm:items-center gap-3 transition-all relative overflow-hidden",
+          review.completed 
+            ? "bg-muted/20 border border-border/40 opacity-75" 
+            : "bg-card border border-indigo-500/15 shadow-sm hover:shadow-md hover:border-indigo-500/30",
+          isOverdue && "border-rose-500/50 bg-rose-500/5"
         )}
       >
-        <div className="flex-1 min-w-0">
+        {(!review.completed && !isOverdue) && <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-500 rounded-l-xl" />}
+        {isOverdue && <div className="absolute left-0 top-0 bottom-0 w-1 bg-rose-500 rounded-l-xl" />}
+        <div className="flex-1 min-w-0 pl-1">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <span className={cn("text-xs font-semibold px-2.5 py-0.5 rounded-full", reviewColors[review.reviewNumber])}>
               {review.reviewNumber}ª Revisão
