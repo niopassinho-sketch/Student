@@ -3,7 +3,7 @@ import { Study, ReviewType } from '@/lib/types';
 import {
   loadStudiesFromDB, createStudyInDB,
   completeReviewInDB, rescheduleReviewInDB,
-  completeStudyInDB, deleteStudyInDB, updateStudyInDB, markStudyAsWatchedInDB,
+  completeStudyInDB, deleteStudyInDB, updateStudyInDB, markStudyAsWatchedInDB, updateReviewNotesInDB,
   getTodayReviews, hasReviewOnDate,
 } from '@/lib/studyStore';
 import { useAuth } from '@/contexts/AuthContext';
