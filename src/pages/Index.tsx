@@ -31,7 +31,7 @@ const Index = () => {
 
   useEffect(() => {
     console.log("Settings state:", settings);
-    if (!user) return;
+    if (!user?.id) return;
 
     const loadSettings = async () => {
       try {
@@ -67,7 +67,7 @@ const Index = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user?.id]);
 
   if (loading) {
     return (

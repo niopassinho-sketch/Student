@@ -31,13 +31,13 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) { setStudies([]); setLoading(false); return; }
+    if (!user?.id) { setStudies([]); setLoading(false); return; }
     setLoading(true);
     loadStudiesFromDB(user.id).then(data => {
       setStudies(data);
       setLoading(false);
     });
-  }, [user]);
+  }, [user?.id]);
 
   const todayReviews = getTodayReviews(studies);
 
