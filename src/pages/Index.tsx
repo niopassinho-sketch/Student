@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Bell, BookOpen, CalendarDays, History, BarChart3, LogOut } from 'lucide-react';
+import { Bell, BookOpen, CalendarDays, History, BarChart3, LogOut, Search } from 'lucide-react';
 import { useStudy } from '@/contexts/StudyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { ReviewCard } from '@/components/ReviewCard';
@@ -7,6 +7,8 @@ import { AddStudyDialog } from '@/components/AddStudyDialog';
 import { SettingsDialog } from '@/components/SettingsDialog';
 import { StudyCard } from '@/components/StudyCard';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { format, parseISO, isToday, isFuture, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
@@ -22,6 +24,10 @@ const Index = () => {
   const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('stats');
   const [settings, setSettings] = useState<{ logo_url: string | null; favicon_url: string | null; theme: string } | null>(null);
+  
+  // Agenda filters
+  const [agendaSearchTerm, setAgendaSearchTerm] = useState('');
+  const [agendaReviewFilter, setAgendaReviewFilter] = useState('all');
 
   useEffect(() => {
     console.log("Settings state:", settings);
@@ -72,11 +78,23 @@ const Index = () => {
   }
 
   // Get all upcoming reviews
-  const upcomingReviews = studies.flatMap(s =>
+  let upcomingReviews = studies.flatMap(s =>
     s.reviews
       .filter(r => !r.completed && !isToday(parseISO(r.scheduledDate)))
-      .map(r => ({ ...r, subjectName: s.subject }))
+      .map(r => ({ ...r, subjectName: s.subject, disciplineName: s.discipline }))
   ).sort((a, b) => a.scheduledDate.localeCompare(b.scheduledDate));
+
+  if (agendaSearchTerm) {
+    const term = agendaSearchTerm.toLowerCase();
+    upcomingReviews = upcomingReviews.filter(r => 
+      r.subjectName.toLowerCase().includes(term) || 
+      (r.disciplineName?.toLowerCase().includes(term))
+    );
+  }
+
+  if (agendaReviewFilter !== 'all') {
+    upcomingReviews = upcomingReviews.filter(r => r.reviewNumber.toString() === agendaReviewFilter);
+  }
 
   // Stats
   const totalStudies = studies.length;
@@ -227,12 +245,44 @@ const Index = () => {
             </TabsContent>
 
             {/* AGENDA */}
-            <TabsContent value="agenda" className="space-y-4">
-              <h2 className="font-display text-2xl font-bold">Agenda de Revisões</h2>
+            <TabsContent value="agenda" className="space-y-6">
+              <div>
+                <h2 className="font-display text-2xl font-bold mb-1">Agenda de Revisões</h2>
+                <p className="text-sm text-muted-foreground">O que você tem planejado para o futuro</p>
+              </div>
+
+              {/* Toolbar */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Buscar matéria ou disciplina..." 
+                    className="pl-9 bg-card focus-visible:ring-indigo-500/30"
+                    value={agendaSearchTerm}
+                    onChange={e => setAgendaSearchTerm(e.target.value)}
+                  />
+                </div>
+                <div className="w-full sm:w-48">
+                  <Select value={agendaReviewFilter} onValueChange={setAgendaReviewFilter}>
+                    <SelectTrigger className="bg-card w-full">
+                      <SelectValue placeholder="Todas as revisões" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todas as revisões</SelectItem>
+                      <SelectItem value="1">1ª Revisão</SelectItem>
+                      <SelectItem value="2">2ª Revisão</SelectItem>
+                      <SelectItem value="3">3ª Revisão</SelectItem>
+                      <SelectItem value="4">4ª Revisão</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               {upcomingReviews.length === 0 ? (
-                <div className="glass-card rounded-xl p-12 text-center">
-                  <CalendarDays className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-sm text-muted-foreground">Nenhuma revisão agendada.</p>
+                <div className="glass-card rounded-xl p-12 text-center border-dashed">
+                  <CalendarDays className="w-10 h-10 text-muted-foreground mx-auto mb-3 opacity-30" />
+                  <h3 className="font-display font-medium text-lg mb-1">Nada agendado</h3>
+                  <p className="text-sm text-muted-foreground">Nenhuma revisão foi encontrada com seus filtros.</p>
                 </div>
               ) : (
                 <div className="space-y-3">
