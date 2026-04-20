@@ -144,7 +144,15 @@ export function ReviewCard({ review, showSubject = true, showNotes = false }: Re
       </motion.div>
 
       {/* Notes Dialog */}
-      <Dialog open={notesOpen} onOpenChange={setNotesOpen}>
+      <Dialog 
+        open={notesOpen} 
+        onOpenChange={(open) => {
+          if (!open) {
+            updateReviewNotes(review.studyId, review.id, notes);
+          }
+          setNotesOpen(open);
+        }}
+      >
         <DialogContent className="glass-card max-w-lg">
           <DialogHeader>
             <DialogTitle className="font-display">Minhas Impressões</DialogTitle>
@@ -154,11 +162,20 @@ export function ReviewCard({ review, showSubject = true, showNotes = false }: Re
               placeholder="Minhas impressões..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
+              onBlur={() => updateReviewNotes(review.studyId, review.id, notes)}
               className="min-h-[150px] resize-y"
             />
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setNotesOpen(false)}>Fechar</Button>
-              <Button onClick={() => { updateReviewNotes(review.studyId, review.id, notes); setNotesOpen(false); }} className="bg-primary text-primary-foreground">
+              <Button variant="outline" onClick={() => {
+                updateReviewNotes(review.studyId, review.id, notes);
+                setNotesOpen(false);
+              }}>
+                Fechar
+              </Button>
+              <Button onClick={() => { 
+                updateReviewNotes(review.studyId, review.id, notes); 
+                setNotesOpen(false); 
+              }} className="bg-primary text-primary-foreground">
                 Salvar Impressões
               </Button>
             </div>
