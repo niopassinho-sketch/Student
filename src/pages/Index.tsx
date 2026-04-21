@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Bell, BookOpen, CalendarDays, History, BarChart3, LogOut, Search } from 'lucide-react';
+import { Bell, BookOpen, CalendarDays, History, BarChart3, LogOut, Search, CheckCircle2 } from 'lucide-react';
 import { useStudy } from '@/contexts/StudyContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { ReviewCard } from '@/components/ReviewCard';
@@ -96,6 +96,9 @@ const Index = () => {
     upcomingReviews = upcomingReviews.filter(r => r.reviewNumber.toString() === agendaReviewFilter);
   }
 
+  // Get today's scheduled studies
+  const todayStudies = studies.filter(s => !s.completed && s.studyDate && isToday(parseISO(s.studyDate)));
+
   // Stats
   const totalStudies = studies.length;
   const completedStudies = studies.filter(s => s.completed).length;
@@ -149,15 +152,15 @@ const Index = () => {
               </div>
               {/* --- FIM DA ALTERAÇÃO --- */}
 
-              {todayReviews.length > 0 && (
+              {(todayReviews.length > 0 || todayStudies.length > 0) && (
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   className="relative"
                 >
                   <Bell className="w-5 h-5 text-secondary" />
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
-                    {todayReviews.length}
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 bg-destructive text-destructive-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {todayReviews.length + todayStudies.length}
                   </span>
                 </motion.div>
               )}
@@ -171,7 +174,7 @@ const Index = () => {
         </header>
 
         {/* Today's Alert Banner */}
-        {todayReviews.length > 0 && activeTab !== 'today' && (
+        {(todayReviews.length > 0 || todayStudies.length > 0) && activeTab !== 'today' && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -180,7 +183,9 @@ const Index = () => {
           >
             <div className="container max-w-4xl mx-auto px-4 py-3 flex items-center gap-2 text-sm">
               <Bell className="w-4 h-4 text-secondary" />
-              <span className="font-medium">Você tem {todayReviews.length} revisão(ões) para hoje!</span>
+              <span className="font-medium">
+                Você tem {(todayReviews.length > 0 && todayStudies.length > 0) ? `${todayStudies.length} aula(s) e ${todayReviews.length} revisão(ões)` : todayStudies.length > 0 ? `${todayStudies.length} aula(s)` : `${todayReviews.length} revisão(ões)`} pendentes para hoje!
+              </span>
             </div>
           </motion.div>
         )}
@@ -199,9 +204,9 @@ const Index = () => {
               <TabsTrigger value="today" className="gap-1.5 data-[state=active]:bg-indigo-500/15 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 rounded-lg py-2 transition-all">
                 <Bell className="w-4 h-4" />
                 <span className="hidden sm:inline">Hoje</span>
-                {todayReviews.length > 0 && (
-                  <span className="ml-1 w-5 h-5 bg-rose-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-sm">
-                    {todayReviews.length}
+                {(todayReviews.length > 0 || todayStudies.length > 0) && (
+                  <span className="ml-1 min-w-[20px] h-5 px-1 bg-rose-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-sm">
+                    {todayReviews.length + todayStudies.length}
                   </span>
                 )}
               </TabsTrigger>
@@ -216,32 +221,57 @@ const Index = () => {
             </TabsList>
             
             {/* TODAY */}
-            <TabsContent value="today" className="space-y-4">
+            <TabsContent value="today" className="space-y-8">
               <div>
-                <h2 className="font-display text-2xl font-bold mb-1">Revisões de Hoje</h2>
+                <h2 className="font-display text-2xl font-bold mb-1">Seu Dia</h2>
                 <p className="text-sm text-muted-foreground">
                   {format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                 </p>
               </div>
-              {todayReviews.length === 0 ? (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="glass-card rounded-xl p-12 text-center"
-                >
-                  <div className="w-16 h-16 rounded-full bg-success/10 flex items-center justify-center mx-auto mb-4">
-                    <BookOpen className="w-8 h-8 text-success" />
+
+              {/* Today's Studies (Aulas) */}
+              <div className="space-y-4">
+                <h3 className="font-display font-semibold flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+                  <BookOpen className="w-5 h-5" /> Aulas e Estudos de Hoje
+                </h3>
+                {todayStudies.length === 0 ? (
+                 <div className="p-6 text-center bg-muted/20 border border-border/40 rounded-xl border-dashed">
+                    <p className="text-sm text-muted-foreground">Nenhuma aula agendada para assistir hoje.</p>
                   </div>
-                  <h3 className="font-display text-lg font-semibold mb-1">Tudo em dia! 🎉</h3>
-                  <p className="text-sm text-muted-foreground">Nenhuma revisão pendente para hoje.</p>
-                </motion.div>
-              ) : (
-                <div className="space-y-3">
-                  {todayReviews.map(review => (
-                    <ReviewCard key={review.id} review={review} showNotes={true} />
-                  ))}
-                </div>
-              )}
+                ) : (
+                  <div className="space-y-3">
+                    {todayStudies.map(study => (
+                      <StudyCard key={study.id} study={study} />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Today's Reviews */}
+              <div className="space-y-4">
+                <h3 className="font-display font-semibold flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
+                  <CheckCircle2 className="w-5 h-5" /> Revisões de Hoje
+                </h3>
+                {todayReviews.length === 0 ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="p-8 text-center bg-muted/20 border border-border/40 rounded-xl border-dashed"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center mx-auto mb-3">
+                      <BookOpen className="w-6 h-6 text-emerald-500" />
+                    </div>
+                    <h3 className="font-display font-medium text-lg mb-1">Tudo em dia! 🎉</h3>
+                    <p className="text-sm text-muted-foreground">Você não tem revisões pendentes para hoje.</p>
+                  </motion.div>
+                ) : (
+                  <div className="space-y-3">
+                    {todayReviews.map(review => (
+                      <ReviewCard key={review.id} review={review} showNotes={true} />
+                    ))}
+                  </div>
+                )}
+              </div>
             </TabsContent>
 
             {/* AGENDA */}
