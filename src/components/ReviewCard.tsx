@@ -27,7 +27,7 @@ const reviewIcons: Record<string, React.ReactNode> = {
 };
 
 interface ReviewCardProps {
-  review: Review & { subjectName: string; studyUrl?: string };
+  review: Review & { subjectName: string; disciplineName?: string; studyUrl?: string };
   showSubject?: boolean;
   showNotes?: boolean;
 }
@@ -99,7 +99,9 @@ export function ReviewCard({ review, showSubject = true, showNotes = false }: Re
             )}
           </div>
           {showSubject && (
-            <p className="font-semibold text-foreground truncate">{review.subjectName}</p>
+            <p className="font-semibold text-foreground truncate">
+              {review.disciplineName ? `${review.disciplineName} - ${review.subjectName}` : review.subjectName}
+            </p>
           )}
           <p className="text-sm text-muted-foreground">
             {format(parseISO(review.scheduledDate), "dd 'de' MMMM", { locale: ptBR })}
