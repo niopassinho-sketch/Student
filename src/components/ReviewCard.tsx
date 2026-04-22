@@ -1,12 +1,12 @@
 import { format, parseISO, isToday, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion } from 'framer-motion';
-import { AlertCircle, Calendar, CheckCircle2, Video, FileText, HelpCircle, CalendarClock, ExternalLink } from 'lucide-react';
+import { AlertCircle, Calendar, CheckCircle2, Video, FileText, HelpCircle, CalendarClock, ExternalLink, BrainCircuit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { useStudy } from '@/contexts/StudyContext';
-import { Review, ReviewType, REVIEW_TYPE_LABELS } from '@/lib/types';
+import { Review, ReviewType, REVIEW_TYPE_LABELS, REVIEW_METHODOLOGY_GUIDE } from '@/lib/types';
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
@@ -103,7 +103,19 @@ export function ReviewCard({ review, showSubject = true, showNotes = false }: Re
               {review.disciplineName ? `${review.disciplineName} - ${review.subjectName}` : review.subjectName}
             </p>
           )}
-          <p className="text-sm text-muted-foreground">
+          
+          {/* Methodology Hint added here */}
+          <div className="mt-2 p-2 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900">
+            <h4 className="font-display text-xs font-semibold text-indigo-900 dark:text-indigo-300 flex items-center gap-1.5 mb-0.5">
+              <BrainCircuit className="w-3 h-3" />
+              {REVIEW_METHODOLOGY_GUIDE[review.reviewNumber].title}
+            </h4>
+            <p className="text-[10px] text-indigo-700 dark:text-indigo-400 leading-tight">
+              {REVIEW_METHODOLOGY_GUIDE[review.reviewNumber].instruction}
+            </p>
+          </div>
+
+          <p className="text-sm text-muted-foreground mt-2">
             {format(parseISO(review.scheduledDate), "dd 'de' MMMM", { locale: ptBR })}
           </p>
           {review.studyUrl && (

@@ -39,3 +39,10 @@ export const REVIEW_TYPE_LABELS: Record<ReviewType, string> = {
   pdf: 'Apostila PDF',
   questions: 'Resolução de Questões',
 };
+
+export const REVIEW_METHODOLOGY_GUIDE: Record<1 | 2 | 3 | 4, { title: string; instruction: string }> = {
+  1: { title: 'Flashcard / Feynman Rápido', instruction: 'Tente explicar o conceito em voz alta para si mesmo ANTES de consultar. Depois, force a memória com questões.' },
+  2: { title: 'Resumo Ativo / PDF', instruction: 'Mentalize os tópicos principais antes de abrir o PDF. Desenhe um mapa mental rápido do que lembra.' },
+  3: { title: 'Explicação Feynman', instruction: 'Explique o conceito como se estivesse ensinando uma criança. Se travar, essa é sua lacuna.' },
+  4: { title: 'Simulação Complexa', instruction: 'Foco em questões difíceis e explicação em profundidade. Objetivo: fluidez total.' },
+};
