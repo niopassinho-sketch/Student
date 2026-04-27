@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { format, parseISO, isToday, isFuture, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
-import { cn } from '@/lib/utils';
+import { cn, parseTimeToMinutes, formatMinutesToHours } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, Legend } from 'recharts';
@@ -108,6 +108,14 @@ const Index = () => {
     s.reviews.filter(r => !r.completed && isPast(parseISO(r.scheduledDate)) && !isToday(parseISO(r.scheduledDate)))
   ).length;
 
+  const totalStudiedMinutes = studies.reduce((acc, s) => {
+    acc += parseTimeToMinutes(s.totalHoursMinutes || "00:00");
+    s.reviews.forEach(r => {
+      acc += (r.timeSpentMinutes || 0);
+    });
+    return acc;
+  }, 0);
+
   // Chart Data Preparation
   const chartData = [...studies.reduce((acc, s) => {
     const name = s.discipline || 'Outros';
@@ -141,16 +149,11 @@ const Index = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {/* --- INICIO DA ALTERAÇÃO --- */}
-              <div className="hidden md:flex flex-col items-end mr-4">
-                <span className="text-sm font-semibold text-foreground">
-                  {user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Aluno'}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {user?.email}
-                </span>
+              {/* Mini Stats Panel */}
+              <div className="bg-indigo-500/10 border border-indigo-500/20 px-4 py-2 rounded-xl flex items-center gap-2.5 mr-2">
+                <BarChart3 className="w-5 h-5 text-indigo-600" />
+                <span className="text-base font-bold text-indigo-900 dark:text-indigo-300">{formatMinutesToHours(totalStudiedMinutes)}</span>
               </div>
-              {/* --- FIM DA ALTERAÇÃO --- */}
 
               {(todayReviews.length > 0 || todayStudies.length > 0) && (
                 <motion.div
@@ -165,7 +168,6 @@ const Index = () => {
                 </motion.div>
               )}
               <SettingsDialog />
-              <AddStudyDialog />
               <Button variant="ghost" size="icon" onClick={signOut} title="Sair">
                 <LogOut className="w-5 h-5" />
               </Button>
@@ -195,30 +197,32 @@ const Index = () => {
       <main className="flex-1 overflow-y-auto">
         <div className="container max-w-4xl mx-auto px-4 py-6">
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as Tab)}>
-            {/* The tabs trigger issticky to stay at the top of the scrollable area */}
-            <TabsList className="w-full justify-start gap-2 bg-slate-500/10 dark:bg-slate-500/20 backdrop-blur-md mb-6 sticky top-0 z-40 p-2 h-auto border-b border-border/50 shadow-sm rounded-xl">
-              <TabsTrigger value="stats" className="gap-1.5 data-[state=active]:bg-indigo-500/15 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 rounded-lg py-2 transition-all">
-                <BarChart3 className="w-4 h-4" />
-                <span className="hidden sm:inline">Dashboard</span>
-              </TabsTrigger>
-              <TabsTrigger value="today" className="gap-1.5 data-[state=active]:bg-indigo-500/15 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 rounded-lg py-2 transition-all">
-                <Bell className="w-4 h-4" />
-                <span className="hidden sm:inline">Hoje</span>
-                {(todayReviews.length > 0 || todayStudies.length > 0) && (
-                  <span className="ml-1 min-w-[20px] h-5 px-1 bg-rose-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-sm">
-                    {todayReviews.length + todayStudies.length}
-                  </span>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="agenda" className="gap-1.5 data-[state=active]:bg-indigo-500/15 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 rounded-lg py-2 transition-all">
-                <CalendarDays className="w-4 h-4" />
-                <span className="hidden sm:inline">Agenda</span>
-              </TabsTrigger>
-              <TabsTrigger value="history" className="gap-1.5 data-[state=active]:bg-indigo-500/15 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 rounded-lg py-2 transition-all">
-                <History className="w-4 h-4" />
-                <span className="hidden sm:inline">Histórico</span>
-              </TabsTrigger>
-            </TabsList>
+            <div className="flex items-center gap-2 mb-6 sticky top-0 z-40 bg-slate-500/10 dark:bg-slate-500/20 backdrop-blur-md p-2 border-b border-border/50 shadow-sm rounded-xl">
+              <TabsList className="flex-1 w-full justify-start gap-2 bg-transparent p-0 h-auto">
+                <TabsTrigger value="stats" className="gap-1.5 data-[state=active]:bg-indigo-500/15 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 rounded-lg py-2 transition-all">
+                  <BarChart3 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Dashboard</span>
+                </TabsTrigger>
+                <TabsTrigger value="today" className="gap-1.5 data-[state=active]:bg-indigo-500/15 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 rounded-lg py-2 transition-all">
+                  <Bell className="w-4 h-4" />
+                  <span className="hidden sm:inline">Hoje</span>
+                  {(todayReviews.length > 0 || todayStudies.length > 0) && (
+                    <span className="ml-1 min-w-[20px] h-5 px-1 bg-rose-500 text-white text-xs font-bold rounded-full flex items-center justify-center shadow-sm">
+                      {todayReviews.length + todayStudies.length}
+                    </span>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="agenda" className="gap-1.5 data-[state=active]:bg-indigo-500/15 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 rounded-lg py-2 transition-all">
+                  <CalendarDays className="w-4 h-4" />
+                  <span className="hidden sm:inline">Agenda</span>
+                </TabsTrigger>
+                <TabsTrigger value="history" className="gap-1.5 data-[state=active]:bg-indigo-500/15 data-[state=active]:text-indigo-600 dark:data-[state=active]:text-indigo-400 rounded-lg py-2 transition-all">
+                  <History className="w-4 h-4" />
+                  <span className="hidden sm:inline">Histórico</span>
+                </TabsTrigger>
+              </TabsList>
+              <AddStudyDialog />
+            </div>
             
             {/* TODAY */}
             <TabsContent value="today" className="space-y-8">

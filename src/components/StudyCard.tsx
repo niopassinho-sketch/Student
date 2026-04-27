@@ -226,57 +226,10 @@ export function StudyCard({ study }: { study: Study }) {
           }
         }}
       >
-        <DialogContent className="glass-card max-w-lg">
+        <DialogContent className="glass-card max-w-lg" aria-labelledby="notes-dialog-title" aria-describedby="notes-dialog-description">
           <DialogHeader>
-            <DialogTitle className="font-display">Minhas Impressões</DialogTitle>
-            <DialogDescription>
-              {selectedNotesReview && `Anotações da ${selectedNotesReview.reviewNumber}ª revisão`}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <Textarea
-              placeholder="Escreva suas anotações, dificuldades ou pontos importantes..."
-              value={notesDraft}
-              onChange={(e) => setNotesDraft(e.target.value)}
-              onBlur={() => {
-                if (selectedNotesReview) {
-                  updateReviewNotes(study.id, selectedNotesReview.id, notesDraft);
-                }
-              }}
-              className="min-h-[150px] resize-y"
-            />
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => {
-                if (selectedNotesReview) {
-                  updateReviewNotes(study.id, selectedNotesReview.id, notesDraft);
-                }
-                setSelectedNotesReview(null);
-              }}>
-                Fechar
-              </Button>
-              <Button onClick={handleSaveNotes} className="bg-primary text-primary-foreground">
-                Salvar Impressões
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-      <Dialog 
-        open={!!selectedNotesReview} 
-        onOpenChange={(open) => {
-          if (!open) {
-            // Auto-save any drafts when clicking outside/closing
-            if (selectedNotesReview) {
-              updateReviewNotes(study.id, selectedNotesReview.id, notesDraft);
-            }
-            setSelectedNotesReview(null);
-          }
-        }}
-      >
-        <DialogContent className="glass-card max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="font-display">Minhas Impressões</DialogTitle>
-            <DialogDescription>
+            <DialogTitle id="notes-dialog-title" className="font-display">Minhas Impressões</DialogTitle>
+            <DialogDescription id="notes-dialog-description">
               {selectedNotesReview && `Anotações da ${selectedNotesReview.reviewNumber}ª revisão`}
             </DialogDescription>
           </DialogHeader>

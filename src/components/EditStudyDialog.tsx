@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useStudy } from '@/contexts/StudyContext';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Study } from '@/lib/types';
 
 export function EditStudyDialog({ study, open, onOpenChange }: { study: Study, open: boolean, onOpenChange: (open: boolean) => void }) {
@@ -31,6 +31,9 @@ export function EditStudyDialog({ study, open, onOpenChange }: { study: Study, o
             <Pencil className="w-5 h-5 text-primary" />
             Editar Aula
           </DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            Altere os detalhes do estudo abaixo.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div>

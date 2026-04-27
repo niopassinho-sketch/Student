@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useStudy } from '@/contexts/StudyContext';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 
 export function AddStudyDialog() {
   const { addStudy } = useStudy();
@@ -32,8 +32,8 @@ export function AddStudyDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="lg" className="gap-2 font-display font-semibold shadow-lg hover:shadow-xl transition-shadow">
-          <Plus className="w-5 h-5" />
+        <Button size="sm" className="gap-2 font-display font-semibold">
+          <Plus className="w-4 h-4" />
           Nova Aula
         </Button>
       </DialogTrigger>
@@ -43,6 +43,9 @@ export function AddStudyDialog() {
             <BookOpen className="w-5 h-5 text-primary" />
             Registrar Nova Aula
           </DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">
+            Adicione os detalhes da aula que você deseja registrar.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">
           <div>
