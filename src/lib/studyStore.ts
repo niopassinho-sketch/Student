@@ -33,6 +33,7 @@ export async function loadStudiesFromDB(userId: string): Promise<Study[]> {
       notes: r.notes ?? undefined,
       type: (r.review_type as ReviewType) ?? undefined,
       rescheduledFrom: r.rescheduled_from ?? undefined,
+      timeSpentMinutes: r.time_spent_minutes ?? undefined,
     };
     const list = reviewsByStudy.get(r.study_id) || [];
     list.push(review);
@@ -46,6 +47,7 @@ export async function loadStudiesFromDB(userId: string): Promise<Study[]> {
     description: s.description ?? undefined,
     url: s.url ?? undefined,
     studyDate: s.study_date,
+    totalHoursMinutes: s.total_hours_minutes ?? undefined,
     completionDate: s.completion_date ?? undefined,
     completed: s.completed,
     completedDate: s.completed_date ?? undefined,
@@ -54,10 +56,10 @@ export async function loadStudiesFromDB(userId: string): Promise<Study[]> {
   }));
 }
 
-export async function createStudyInDB(userId: string, discipline: string, subject: string, studyDate: string, description?: string, url?: string): Promise<Study | null> {
+export async function createStudyInDB(userId: string, discipline: string, subject: string, studyDate: string, description?: string, url?: string, totalHoursMinutes?: string): Promise<Study | null> {
   const { data: study, error: sErr } = await supabase
     .from('studies')
-    .insert({ user_id: userId, discipline, subject, description, url, study_date: studyDate })
+    .insert({ user_id: userId, discipline, subject, description, url, study_date: studyDate, total_hours_minutes: totalHoursMinutes })
     .select()
     .single();
 
@@ -71,6 +73,7 @@ export async function createStudyInDB(userId: string, discipline: string, subjec
     url: study.url ?? undefined,
     studyDate: study.study_date,
     completionDate: study.completion_date ?? undefined,
+    totalHoursMinutes: study.total_hours_minutes ?? undefined,
     completed: study.completed,
     reviews: [],
     createdAt: study.created_at,
@@ -113,10 +116,10 @@ export async function markStudyAsWatchedInDB(userId: string, studyId: string, co
   })).sort((a, b) => a.reviewNumber - b.reviewNumber);
 }
 
-export async function completeReviewInDB(reviewId: string, type: ReviewType): Promise<boolean> {
+export async function completeReviewInDB(reviewId: string, type: ReviewType, timeSpentMinutes?: number): Promise<boolean> {
   const { error } = await supabase
     .from('reviews')
-    .update({ completed: true, completed_date: format(new Date(), 'yyyy-MM-dd'), review_type: type })
+    .update({ completed: true, completed_date: format(new Date(), 'yyyy-MM-dd'), review_type: type, time_spent_minutes: timeSpentMinutes })
     .eq('id', reviewId);
   return !error;
 }
@@ -153,10 +156,10 @@ export async function deleteStudyInDB(studyId: string): Promise<boolean> {
   return !error;
 }
 
-export async function updateStudyInDB(studyId: string, discipline: string, subject: string, completionDate: string, description?: string, url?: string): Promise<boolean> {
+export async function updateStudyInDB(studyId: string, discipline: string, subject: string, completionDate: string, description?: string, url?: string, totalHoursMinutes?: string): Promise<boolean> {
   const { error } = await supabase
     .from('studies')
-    .update({ discipline, subject, completion_date: completionDate, description, url })
+    .update({ discipline, subject, completion_date: completionDate, description, url, total_hours_minutes: totalHoursMinutes })
     .eq('id', studyId);
   return !error;
 }

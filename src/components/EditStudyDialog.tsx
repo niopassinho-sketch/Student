@@ -14,11 +14,12 @@ export function EditStudyDialog({ study, open, onOpenChange }: { study: Study, o
   const [completionDate, setCompletionDate] = useState(study.completionDate || study.studyDate || '');
   const [description, setDescription] = useState(study.description || '');
   const [url, setUrl] = useState(study.url || '');
+  const [totalHoursMinutes, setTotalHoursMinutes] = useState(study.totalHoursMinutes || '');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!discipline.trim() || !subject.trim() || !completionDate) return;
-    updateStudy(study.id, discipline.trim(), subject.trim(), completionDate, description.trim() || undefined, url.trim() || undefined);
+    updateStudy(study.id, discipline.trim(), subject.trim(), completionDate, description.trim() || undefined, url.trim() || undefined, totalHoursMinutes.trim() || undefined);
     onOpenChange(false);
   };
 
@@ -58,6 +59,14 @@ export function EditStudyDialog({ study, open, onOpenChange }: { study: Study, o
               value={completionDate}
               onChange={e => setCompletionDate(e.target.value)}
               required
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Carga Horária (opcional)</label>
+            <Input
+              value={totalHoursMinutes}
+              onChange={e => setTotalHoursMinutes(e.target.value)}
+              placeholder="Ex: 01:30"
             />
           </div>
           <div>

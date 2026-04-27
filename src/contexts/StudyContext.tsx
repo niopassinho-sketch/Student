@@ -13,10 +13,10 @@ interface StudyContextType {
   studies: Study[];
   todayReviews: ReturnType<typeof getTodayReviews>;
   loading: boolean;
-  addStudy: (discipline: string, subject: string, studyDate: string, description?: string, url?: string) => Promise<void>;
-  updateStudy: (studyId: string, discipline: string, subject: string, studyDate: string, description?: string, url?: string) => Promise<void>;
+  addStudy: (discipline: string, subject: string, studyDate: string, description?: string, url?: string, totalHoursMinutes?: string) => Promise<void>;
+  updateStudy: (studyId: string, discipline: string, subject: string, studyDate: string, description?: string, url?: string, totalHoursMinutes?: string) => Promise<void>;
   markStudyAsWatched: (studyId: string, completionDate: string) => Promise<void>;
-  markReviewComplete: (studyId: string, reviewId: string, type: ReviewType) => Promise<void>;
+  markReviewComplete: (studyId: string, reviewId: string, type: ReviewType, timeSpentMinutes?: number) => Promise<void>;
   updateReviewNotes: (studyId: string, reviewId: string, notes: string) => Promise<void>;
   rescheduleReview: (studyId: string, reviewId: string, newDate: string) => Promise<void>;
   checkDateConflict: (date: string, excludeReviewId?: string) => boolean;
@@ -41,9 +41,9 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
 
   const todayReviews = getTodayReviews(studies);
 
-  const addStudy = useCallback(async (discipline: string, subject: string, studyDate: string, description?: string, url?: string) => {
+  const addStudy = useCallback(async (discipline: string, subject: string, studyDate: string, description?: string, url?: string, totalHoursMinutes?: string) => {
     if (!user) return;
-    const study = await createStudyInDB(user.id, discipline, subject, studyDate, description, url);
+    const study = await createStudyInDB(user.id, discipline, subject, studyDate, description, url, totalHoursMinutes);
     if (study) {
       setStudies(prev => [study, ...prev]);
       toast.success('Aula agendada!');
@@ -52,10 +52,10 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  const updateStudyFn = useCallback(async (studyId: string, discipline: string, subject: string, studyDate: string, description?: string, url?: string) => {
-    const ok = await updateStudyInDB(studyId, discipline, subject, studyDate, description, url);
+  const updateStudyFn = useCallback(async (studyId: string, discipline: string, subject: string, studyDate: string, description?: string, url?: string, totalHoursMinutes?: string) => {
+    const ok = await updateStudyInDB(studyId, discipline, subject, studyDate, description, url, totalHoursMinutes);
     if (ok) {
-      setStudies(prev => prev.map(s => s.id === studyId ? { ...s, discipline, subject, studyDate, description, url } : s));
+      setStudies(prev => prev.map(s => s.id === studyId ? { ...s, discipline, subject, studyDate, description, url, totalHoursMinutes } : s));
       toast.success('Estudo atualizado!');
     } else {
       toast.error('Erro ao atualizar estudo');
@@ -76,14 +76,14 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
     }
   }, [user]);
 
-  const markReviewComplete = useCallback(async (_studyId: string, reviewId: string, type: ReviewType) => {
-    const ok = await completeReviewInDB(reviewId, type);
+  const markReviewComplete = useCallback(async (_studyId: string, reviewId: string, type: ReviewType, timeSpentMinutes?: number) => {
+    const ok = await completeReviewInDB(reviewId, type, timeSpentMinutes);
     if (ok) {
       setStudies(prev => prev.map(study => ({
         ...study,
         reviews: study.reviews.map(r =>
           r.id === reviewId
-            ? { ...r, completed: true, completedDate: new Date().toISOString().split('T')[0], type }
+            ? { ...r, completed: true, completedDate: new Date().toISOString().split('T')[0], type, timeSpentMinutes }
             : r
         ),
       })));

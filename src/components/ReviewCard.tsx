@@ -7,11 +7,12 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { useStudy } from '@/contexts/StudyContext';
 import { Review, ReviewType, REVIEW_TYPE_LABELS, REVIEW_METHODOLOGY_GUIDE } from '@/lib/types';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { formatTime } from '@/lib/utils'; // Assuming this exists or I will create it.
 
 const reviewColors: Record<number, string> = {
   1: 'review-badge-1',
@@ -41,13 +42,30 @@ export function ReviewCard({ review, showSubject = true, showNotes = false }: Re
   const [notes, setNotes] = useState(review.notes || '');
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [conflictWarning, setConflictWarning] = useState(false);
+  const [timerSeconds, setTimerSeconds] = useState(0);
+  const [timerActive, setTimerActive] = useState(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (timerActive) {
+      intervalRef.current = setInterval(() => {
+        setTimerSeconds(s => s + 1);
+      }, 1000);
+    } else if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [timerActive]);
 
   const isOverdue = isPast(parseISO(review.scheduledDate)) && !isToday(parseISO(review.scheduledDate));
 
   const handleComplete = () => {
-    markReviewComplete(review.studyId, review.id, selectedType);
+    const minutes = Math.round(timerSeconds / 60);
+    markReviewComplete(review.studyId, review.id, selectedType, minutes);
     updateReviewNotes(review.studyId, review.id, notes);
     setCompleteOpen(false);
+    setTimerActive(false);
+    setTimerSeconds(0);
   };
 
   const handleReschedule = () => {
@@ -129,6 +147,20 @@ export function ReviewCard({ review, showSubject = true, showNotes = false }: Re
               Acessar aula
             </a>
           )}
+          
+          {/* Timer controls */}
+          {!review.completed && (
+            <div className="flex items-center gap-2 mt-3 p-2 bg-muted/40 rounded-lg">
+              <span className="font-mono text-sm font-semibold tabular-nums min-w-[45px]">{formatTime(timerSeconds)}</span>
+              <Button variant={timerActive ? "destructive" : "secondary"} size="sm" className="h-7 text-xs" onClick={() => setTimerActive(!timerActive)}>
+                {timerActive ? 'Pausar' : 'Iniciar'}
+              </Button>
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setTimerActive(false); setTimerSeconds(0); }}>
+                Reset
+              </Button>
+            </div>
+          )}
+
           {showNotes && (
             <div className="mt-3">
               <Textarea
@@ -207,6 +239,7 @@ export function ReviewCard({ review, showSubject = true, showNotes = false }: Re
             <p className="text-sm text-muted-foreground">
               Como você revisou <strong>{review.subjectName}</strong>?
             </p>
+            <p className="text-xs text-muted-foreground">Tempo registrado: {formatTime(timerSeconds)}</p>
             <Select value={selectedType} onValueChange={(v) => setSelectedType(v as ReviewType)}>
               <SelectTrigger>
                 <SelectValue />

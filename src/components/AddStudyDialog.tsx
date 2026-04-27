@@ -14,16 +14,18 @@ export function AddStudyDialog() {
   const [studyDate, setStudyDate] = useState(new Date().toISOString().split('T')[0]);
   const [description, setDescription] = useState('');
   const [url, setUrl] = useState('');
+  const [totalHoursMinutes, setTotalHoursMinutes] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!discipline.trim() || !subject.trim() || !studyDate) return;
-    addStudy(discipline.trim(), subject.trim(), studyDate, description.trim() || undefined, url.trim() || undefined);
+    addStudy(discipline.trim(), subject.trim(), studyDate, description.trim() || undefined, url.trim() || undefined, totalHoursMinutes.trim() || undefined);
     setDiscipline('');
     setSubject('');
     setStudyDate(new Date().toISOString().split('T')[0]);
     setDescription('');
     setUrl('');
+    setTotalHoursMinutes('');
     setOpen(false);
   };
 
@@ -78,6 +80,14 @@ export function AddStudyDialog() {
               value=""
               disabled
               placeholder="Preencha após assistir a aula"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-muted-foreground mb-1.5 block">Carga Horária (opcional)</label>
+            <Input
+              value={totalHoursMinutes}
+              onChange={e => setTotalHoursMinutes(e.target.value)}
+              placeholder="Ex: 01:30"
             />
           </div>
           <div>

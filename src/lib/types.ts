@@ -11,6 +11,7 @@ export interface Review {
   type?: ReviewType;
   rescheduledFrom?: string;
   notes?: string;
+  timeSpentMinutes?: number;
 }
 
 export interface Study {
@@ -21,6 +22,7 @@ export interface Study {
   url?: string;
   studyDate: string; // ISO date string YYYY-MM-DD
   completionDate?: string; // Date when the study was completed
+  totalHoursMinutes?: string;
   completed: boolean;
   completedDate?: string;
   reviews: Review[];
@@ -41,8 +43,8 @@ export const REVIEW_TYPE_LABELS: Record<ReviewType, string> = {
 };
 
 export const REVIEW_METHODOLOGY_GUIDE: Record<1 | 2 | 3 | 4, { title: string; instruction: string }> = {
-  1: { title: 'Flashcard / Feynman Rápido', instruction: 'Tente explicar o conceito em voz alta para si mesmo ANTES de consultar. Depois, force a memória com questões.' },
-  2: { title: 'Resumo Ativo / PDF', instruction: 'Mentalize os tópicos principais antes de abrir o PDF. Desenhe um mapa mental rápido do que lembra.' },
-  3: { title: 'Explicação Feynman', instruction: 'Explique o conceito como se estivesse ensinando uma criança. Se travar, essa é sua lacuna.' },
-  4: { title: 'Simulação Complexa', instruction: 'Foco em questões difíceis e explicação em profundidade. Objetivo: fluidez total.' },
+  1: { title: '1ª Revisão - Vídeo Acelerado', instruction: 'Assistir videoaula acelerada em 1,25x. Seguida de resolução de questões e anotações.' },
+  2: { title: '2ª Revisão - Material PDF', instruction: 'Revisar aula através do material em PDF. Seguida de resolução de questões e anotações.' },
+  3: { title: '3ª Revisão - Vídeo Acelerado', instruction: 'Assistir videoaula acelerada em 1,50x. Seguida de resolução de questões e anotações.' },
+  4: { title: '4ª Revisão - Vídeo Acelerado', instruction: 'Assistir videoaula acelerada em 1,50x. Seguida de resolução de questões e anotações.' },
 };
