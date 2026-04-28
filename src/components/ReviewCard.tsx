@@ -8,11 +8,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { useStudy } from '@/contexts/StudyContext';
 import { Review, ReviewType, REVIEW_TYPE_LABELS, REVIEW_METHODOLOGY_GUIDE } from '@/lib/types';
 import { useState, useEffect, useRef } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { formatTime } from '@/lib/utils'; // Assuming this exists or I will create it.
+import { formatTime } from '@/lib/utils';
 
 const reviewColors: Record<number, string> = {
   1: 'review-badge-1',
@@ -42,20 +42,64 @@ export function ReviewCard({ review, showSubject = true, showNotes = false }: Re
   const [notes, setNotes] = useState(review.notes || '');
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [conflictWarning, setConflictWarning] = useState(false);
-  const [timerSeconds, setTimerSeconds] = useState(0);
-  const [timerActive, setTimerActive] = useState(false);
+  
+  const timerKey = `review-timer-${review.id}`;
+  
+  const [timerSeconds, setTimerSeconds] = useState(() => {
+    const saved = localStorage.getItem(timerKey);
+    if (saved) {
+      try {
+        const { accumulated, lastStart, active } = JSON.parse(saved);
+        if (active && lastStart) {
+          return accumulated + Math.floor((Date.now() - lastStart) / 1000);
+        }
+        return accumulated || 0;
+      } catch (e) { }
+    }
+    return 0;
+  });
+
+  const [timerActive, setTimerActive] = useState(() => {
+    const saved = localStorage.getItem(timerKey);
+    if (saved) {
+      try {
+        return JSON.parse(saved).active || false;
+      } catch (e) { }
+    }
+    return false;
+  });
+
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const currentSecondsRef = useRef(timerSeconds);
+
+  useEffect(() => {
+    currentSecondsRef.current = timerSeconds;
+  }, [timerSeconds]);
 
   useEffect(() => {
     if (timerActive) {
+      const startTime = Date.now() - (currentSecondsRef.current * 1000);
+      
+      localStorage.setItem(timerKey, JSON.stringify({
+        accumulated: 0,
+        lastStart: startTime,
+        active: true
+      }));
+
       intervalRef.current = setInterval(() => {
-        setTimerSeconds(s => s + 1);
+        setTimerSeconds(Math.floor((Date.now() - startTime) / 1000));
       }, 1000);
-    } else if (intervalRef.current) {
-      clearInterval(intervalRef.current);
+    } else {
+      localStorage.setItem(timerKey, JSON.stringify({
+        accumulated: currentSecondsRef.current,
+        lastStart: null,
+        active: false
+      }));
+      
+      if (intervalRef.current) clearInterval(intervalRef.current);
     }
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [timerActive]);
+  }, [timerActive, timerKey]);
 
   const isOverdue = isPast(parseISO(review.scheduledDate)) && !isToday(parseISO(review.scheduledDate));
 
@@ -64,8 +108,22 @@ export function ReviewCard({ review, showSubject = true, showNotes = false }: Re
     markReviewComplete(review.studyId, review.id, selectedType, minutes);
     updateReviewNotes(review.studyId, review.id, notes);
     setCompleteOpen(false);
+    
     setTimerActive(false);
     setTimerSeconds(0);
+    currentSecondsRef.current = 0;
+    localStorage.removeItem(timerKey);
+  };
+
+  const handleResetTimer = () => {
+    setTimerActive(false);
+    setTimerSeconds(0);
+    currentSecondsRef.current = 0;
+    localStorage.setItem(timerKey, JSON.stringify({
+      accumulated: 0,
+      lastStart: null,
+      active: false
+    }));
   };
 
   const handleReschedule = () => {
@@ -155,7 +213,7 @@ export function ReviewCard({ review, showSubject = true, showNotes = false }: Re
               <Button variant={timerActive ? "destructive" : "secondary"} size="sm" className="h-7 text-xs" onClick={() => setTimerActive(!timerActive)}>
                 {timerActive ? 'Pausar' : 'Iniciar'}
               </Button>
-              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => { setTimerActive(false); setTimerSeconds(0); }}>
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={handleResetTimer}>
                 Reset
               </Button>
             </div>
@@ -199,9 +257,12 @@ export function ReviewCard({ review, showSubject = true, showNotes = false }: Re
           setNotesOpen(open);
         }}
       >
-        <DialogContent className="glass-card max-w-lg">
+        <DialogContent className="glass-card max-w-lg" aria-describedby="notes-dialog-description">
           <DialogHeader>
             <DialogTitle className="font-display">Minhas Impressões</DialogTitle>
+            <DialogDescription id="notes-dialog-description" className="sr-only">
+              Detalhes das impressões da revisão
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <Textarea
@@ -231,9 +292,12 @@ export function ReviewCard({ review, showSubject = true, showNotes = false }: Re
 
       {/* Complete Dialog */}
       <Dialog open={completeOpen} onOpenChange={setCompleteOpen}>
-        <DialogContent className="glass-card">
+        <DialogContent className="glass-card" aria-describedby="complete-dialog-description">
           <DialogHeader>
             <DialogTitle className="font-display">Concluir Revisão</DialogTitle>
+            <DialogDescription id="complete-dialog-description" className="sr-only">
+              Defina as configurações de conclusão de revisão
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
@@ -263,9 +327,12 @@ export function ReviewCard({ review, showSubject = true, showNotes = false }: Re
 
       {/* Reschedule Dialog */}
       <Dialog open={rescheduleOpen} onOpenChange={setRescheduleOpen}>
-        <DialogContent className="glass-card">
+        <DialogContent className="glass-card" aria-describedby="reschedule-dialog-description">
           <DialogHeader>
             <DialogTitle className="font-display">Remarcar Revisão</DialogTitle>
+            <DialogDescription id="reschedule-dialog-description" className="sr-only">
+              Escolha uma nova data para a revisão
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
